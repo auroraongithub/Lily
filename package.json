@@ -1,0 +1,53 @@
+{
+  "name": "lily",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Lily: a lightweight, offline-first, modular story-writing platform.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "dexie": "^4.0.6",
+    "fabric": "^6.0.0",
+    "konva": "^9.3.16",
+    "lexical": "^0.17.1",
+    "@lexical/react": "^0.17.1",
+    "@lexical/rich-text": "^0.17.1",
+    "@lexical/utils": "^0.17.1",
+    "@lexical/selection": "^0.17.1",
+    "@lexical/history": "^0.17.1",
+    "lucide-react": "^0.446.0",
+    "next": "14.2.5",
+    "pdf-lib": "^1.17.1",
+    "pdfmake": "^0.2.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "reactflow": "^11.11.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.5",
+    "postcss": "^8.4.47",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^3.4.10",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.6.2",
+    "vitest": "^2.0.5",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/jest-dom": "^6.5.0",
+    "jsdom": "^25.0.0"
+  }
+}

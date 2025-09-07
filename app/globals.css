@@ -1,0 +1,301 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables for theming (compatible with shadcn patterns) */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+}
+
+html, body, :root {
+  height: 100%;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+}
+
+/* Smooth transitions for layout changes */
+.layout-transition {
+  transition: all 200ms ease-in-out;
+}
+
+/* Project management transitions */
+.project-card-enter {
+  animation: slideInUp 300ms ease-out;
+}
+
+.project-card-exit {
+  animation: slideOutDown 200ms ease-in;
+}
+
+.fade-in {
+  animation: fadeIn 200ms ease-out;
+}
+
+.slide-up {
+  animation: slideUp 250ms ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced hover effects */
+.card-hover {
+  transition: all 200ms ease-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* Dropdown animations */
+.dropdown-enter {
+  animation: dropdownSlide 150ms ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Editor styles */
+.editor-container[data-font="serif"] .editor-content { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
+.editor-container[data-font="sans"] .editor-content { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+.editor-container[data-font="typewriter"] .editor-content { font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+.editor-content { caret-color: hsl(var(--foreground)); }
+.editor-content { overflow-wrap: anywhere; word-break: break-word; }
+
+/* Paged layout visuals */
+.editor-page {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.editor-page:focus-within { box-shadow: 0 12px 36px rgba(0,0,0,0.12); }
+
+/* Lexical Editor Enhancements */
+.lexical-editor {
+  position: relative;
+}
+
+.lexical-editor .editor-content {
+  outline: none;
+  caret-color: hsl(var(--foreground));
+  transition: all 200ms ease-out;
+}
+
+.lexical-editor .editor-content:focus {
+  outline: none;
+}
+
+/* Smooth caret animation */
+.lexical-editor .editor-content * {
+  caret-color: inherit;
+}
+
+/* Selection styling */
+.lexical-editor .editor-content ::selection {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Placeholder styling */
+.lexical-editor .editor-placeholder {
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  user-select: none;
+  position: absolute;
+  inset: 0;            /* occupy the editor container */
+  padding: 2rem;       /* match ContentEditable p-8 (2rem) */
+  transition: opacity 200ms ease-out;
+}
+
+/* Enhanced prose styling */
+.lexical-editor .prose {
+  max-width: none;
+  color: hsl(var(--foreground));
+}
+
+.lexical-editor .prose h1 {
+  color: hsl(var(--foreground));
+  font-weight: 700;
+  font-size: 2.25rem;
+  line-height: 1.2;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.lexical-editor .prose h2 {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  font-size: 1.875rem;
+  line-height: 1.3;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.lexical-editor .prose h3 {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.lexical-editor .prose p {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+.lexical-editor .prose blockquote {
+  border-left: 4px solid hsl(var(--muted));
+  padding-left: 1rem;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+  margin: 1rem 0;
+}
+
+/* Toolbar dropdown animations */
+.toolbar-dropdown {
+  animation: slideDown 150ms ease-out;
+  transform-origin: top center;
+}
+
+/* Make toolbar dropdown background solid (not translucent) */
+.toolbar-dropdown {
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  backdrop-filter: none; /* ensure no inherited blur/transparency */
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Focus ring for accessibility */
+.lexical-editor button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Stats bar styling */
+.editor-stats {
+  background: hsl(var(--muted) / 0.5);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid hsl(var(--border));
+}
