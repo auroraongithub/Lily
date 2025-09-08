@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
-import { Plus, FolderOpen } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
+import { Plus, FolderOpen, Folder } from 'lucide-react'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import { ProjectCard } from '@/features/projects/components/ProjectCard'
 import { CreateProjectModal } from '@/features/projects/components/CreateProjectModal'
@@ -77,43 +78,61 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Projects</h1>
-            <p className="text-muted-foreground">Manage your writing projects and stories</p>
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-6xl mx-auto p-6 space-y-8">
+          {/* Header */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Folder className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">Projects</h1>
+                <p className="text-muted-foreground">Manage your writing projects and stories</p>
+              </div>
+            </div>
           </div>
-          <Button onClick={() => setShowCreateModal(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
-        </div>
 
-        {projects.length === 0 ? (
-          <div className="text-center py-12">
-            <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No projects yet</h2>
-            <p className="text-muted-foreground mb-6">
-              Create your first project to start organizing your stories, volumes, and chapters.
-            </p>
-            <Button onClick={() => setShowCreateModal(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Your First Project
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onClick={() => handleProjectClick(project)}
-                onEdit={handleEditProject}
-                onDelete={handleDeleteProject}
-              />
-            ))}
-          </div>
-        )}
+          {/* Projects Content */}
+          <Card className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-semibold">Your Projects</h2>
+                <p className="text-muted-foreground">Create and manage your writing projects</p>
+              </div>
+              <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Project
+              </Button>
+            </div>
+
+            {projects.length === 0 ? (
+              <div className="text-center py-12">
+                <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No projects yet</h3>
+                <p className="text-muted-foreground mb-6">
+                  Create your first project to start organizing your stories, volumes, and chapters.
+                </p>
+                <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Your First Project
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projects.map((project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onClick={() => handleProjectClick(project)}
+                    onEdit={handleEditProject}
+                    onDelete={handleDeleteProject}
+                  />
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
       </div>
 
       <CreateProjectModal

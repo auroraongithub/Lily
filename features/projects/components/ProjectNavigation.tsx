@@ -88,7 +88,7 @@ export function ProjectNavigation() {
   }
 
   return (
-    <div className="space-y-2 px-2">
+    <div className="space-y-2 px-2 pt-3">
       {/* Project Selector */}
       <div>
         <Dropdown

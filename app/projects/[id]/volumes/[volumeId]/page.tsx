@@ -104,120 +104,134 @@ export default function VolumeDetailPage({ params }: VolumeDetailPageProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">{volume.title}</h1>
-          <p className="text-muted-foreground">Volume {volume.index}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => handleCreateChapter(params.volumeId)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Chapter
-          </Button>
-          <ActionMenu items={getVolumeActions(volume)} />
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {/* Volume Chapters */}
-        {volumeChapters.length > 0 && (
-          <div>
-            <h2 className="text-lg font-semibold mb-3">Chapters</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {volumeChapters.map((chapter) => (
-                <Card key={chapter.id} className="group transition-all duration-200 hover:shadow-md">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold leading-tight truncate">
-                          {chapter.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Chapter {chapter.index}
-                        </p>
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ActionMenu items={getChapterActions(chapter)} />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-3 w-3" />
-                          <span>{chapter.wordCount || 0} words</span>
-                        </div>
-                        <span>Updated {new Date(chapter.updatedAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <BookOpen className="w-6 h-6 text-primary" />
             </div>
-          </div>
-        )}
-
-        {/* Standalone Chapters */}
-        {unvolumizedChapters.length > 0 && (
-          <div>
-            <h2 className="text-lg font-semibold mb-3">Standalone Chapters</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {unvolumizedChapters.map((chapter) => (
-                <Card key={chapter.id} className="group transition-all duration-200 hover:shadow-md">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold leading-tight truncate">
-                          {chapter.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Chapter {chapter.index}
-                        </p>
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ActionMenu items={getChapterActions(chapter)} />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-3 w-3" />
-                          <span>{chapter.wordCount || 0} words</span>
-                        </div>
-                        <span>Updated {new Date(chapter.updatedAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold">{volume.title}</h1>
+              <p className="text-muted-foreground">Volume {volume.index}</p>
             </div>
+            <ActionMenu items={getVolumeActions(volume)} />
           </div>
-        )}
+        </div>
 
-        {volumeChapters.length === 0 && unvolumizedChapters.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Start writing your volume</h2>
-            <p className="text-muted-foreground mb-6">
-              Create chapters to organize your content within this volume.
-            </p>
-            <div className="flex justify-center gap-2">
+        {/* Chapters Content */}
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-semibold">Chapters</h2>
+              <p className="text-muted-foreground">Organize your content into chapters</p>
+            </div>
+            <Button onClick={() => handleCreateChapter(params.volumeId)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Chapter
+            </Button>
+          </div>
+
+          {volumeChapters.length === 0 && unvolumizedChapters.length === 0 ? (
+            <div className="text-center py-12">
+              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Start writing your volume</h3>
+              <p className="text-muted-foreground mb-6">
+                Create chapters to organize your content within this volume.
+              </p>
               <Button onClick={() => handleCreateChapter(params.volumeId)} className="gap-2">
                 <FileText className="h-4 w-4" />
                 Create Chapter
               </Button>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-8">
+              {/* Volume Chapters */}
+              {volumeChapters.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Volume Chapters</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {volumeChapters.map((chapter) => (
+                      <Card key={chapter.id} className="group transition-all duration-200 hover:shadow-md">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold leading-tight truncate">
+                                {chapter.title}
+                              </h4>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Chapter {chapter.index}
+                              </p>
+                            </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ActionMenu items={getChapterActions(chapter)} />
+                            </div>
+                          </div>
+                        </CardHeader>
+                        
+                        <CardContent className="pt-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                <span>{chapter.wordCount || 0} words</span>
+                              </div>
+                              <span>Updated {new Date(chapter.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Standalone Chapters */}
+              {unvolumizedChapters.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Standalone Chapters</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {unvolumizedChapters.map((chapter) => (
+                      <Card key={chapter.id} className="group transition-all duration-200 hover:shadow-md">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold leading-tight truncate">
+                                {chapter.title}
+                              </h4>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Chapter {chapter.index}
+                              </p>
+                            </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ActionMenu items={getChapterActions(chapter)} />
+                            </div>
+                          </div>
+                        </CardHeader>
+                        
+                        <CardContent className="pt-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                <span>{chapter.wordCount || 0} words</span>
+                              </div>
+                              <span>Updated {new Date(chapter.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* Edit Volume Modal */}

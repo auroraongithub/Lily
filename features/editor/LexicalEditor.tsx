@@ -24,6 +24,7 @@ interface LexicalEditorProps {
   document: EditorDocument
   onDocumentChange: (document: Partial<EditorDocument>) => void
   className?: string
+  isLocked?: boolean
 }
 
 // Placeholder component for empty editor
@@ -35,7 +36,7 @@ function Placeholder() {
   )
 }
 
-export function LexicalEditor({ document, onDocumentChange, className }: LexicalEditorProps) {
+export function LexicalEditor({ document, onDocumentChange, className, isLocked = false }: LexicalEditorProps) {
   const [stats, setStats] = useState<EditorStatsType>({
     wordCount: 0,
     characterCount: 0,
@@ -129,10 +130,13 @@ export function LexicalEditor({ document, onDocumentChange, className }: Lexical
   }, [onDocumentChange])
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn('flex flex-col h-full relative', className)}>
       <LexicalComposer initialConfig={initialConfig}>
         {/* Scrollable editor content area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className={cn(
+          'flex-1 overflow-y-auto transition-all duration-300',
+          isLocked && 'blur-sm opacity-30 pointer-events-none'
+        )}>
           {/* Toolbar - sticky within the editor scroll area */}
           <div className="sticky top-0 z-20 bg-background -mt-px relative">
             <EditorToolbar 
@@ -184,8 +188,8 @@ export function LexicalEditor({ document, onDocumentChange, className }: Lexical
             <ImagePlugin />
           </div>
 
-          {/* Stats bar - sticky at bottom of the editor scroll area */}
-          <div className="sticky bottom-0 z-20 w-full border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-1">
+          {/* Stats bar - fixed to bottom of viewport */}
+          <div className="fixed bottom-0 left-0 right-0 z-20 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-1">
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <span>{stats.wordCount} words</span>
               <span>{stats.characterCount} characters</span>

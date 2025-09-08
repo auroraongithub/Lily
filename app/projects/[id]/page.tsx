@@ -85,76 +85,92 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{project.name}</h1>
-          {project.description && (
-            <p className="text-muted-foreground">{project.description}</p>
-          )}
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <BookOpen className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">{project.name}</h1>
+              {project.description && (
+                <p className="text-muted-foreground">{project.description}</p>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="ml-auto">
-          <Button onClick={handleCreateVolume} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Volume
-          </Button>
-        </div>
-      </div>
 
-      {volumes.length === 0 ? (
-        <div className="text-center py-12">
-          <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No volumes yet</h2>
-          <p className="text-muted-foreground mb-6">
-            Create your first volume to start organizing your content into chapters.
-          </p>
-          <Button onClick={handleCreateVolume} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create Your First Volume
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {volumes.map((volume) => (
-            <Card 
-              key={volume.id}
-              className="group cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02]"
-              onClick={() => handleVolumeClick(volume.id)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg leading-tight truncate">
-                      {volume.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Volume {volume.index}
-                    </p>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ActionMenu items={getVolumeActions(volume)} />
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="h-3 w-3" />
-                    <span>Volume</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>Updated {new Date(volume.updatedAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+        {/* Volumes Content */}
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-semibold">Volumes</h2>
+              <p className="text-muted-foreground">Organize your content into volumes and chapters</p>
+            </div>
+            <Button onClick={handleCreateVolume} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Volume
+            </Button>
+          </div>
+
+          {volumes.length === 0 ? (
+            <div className="text-center py-12">
+              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No volumes yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Create your first volume to start organizing your content into chapters.
+              </p>
+              <Button onClick={handleCreateVolume} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create Your First Volume
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {volumes.map((volume) => (
+                <Card 
+                  key={volume.id}
+                  className="group cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02]"
+                  onClick={() => handleVolumeClick(volume.id)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-lg leading-tight truncate">
+                          {volume.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Volume {volume.index}
+                        </p>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ActionMenu items={getVolumeActions(volume)} />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        <span>Volume</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>Updated {new Date(volume.updatedAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Edit Volume Modal */}
       <EditVolumeModal

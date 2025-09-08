@@ -1,13 +1,14 @@
 "use client"
 
 import "./globals.css"
-import Link from "next/link"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { usePathname } from "next/navigation"
 import { Sidebar } from "@/components/ui/Sidebar"
 import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
-import { LayoutGrid, Type, Map, NotebookText, Folder, Import, Settings, PanelsTopLeft } from "lucide-react"
+import { Type, Map, Folder, Import, Settings, PanelsTopLeft } from "lucide-react"
 import { ProjectProvider, useProjectContext } from "@/features/projects/context/ProjectContext"
+import { ThemeProvider } from "@/features/settings/context/ThemeContext"
 
 // App modes
 export type AppMode = "dashboard" | "editor"
@@ -31,6 +32,8 @@ function HeaderChapterIndicator() {
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<AppMode>("dashboard")
   const [collapsed, setCollapsed] = useState(false)
+  const pathname = usePathname()
+  const isFullBleed = pathname.startsWith("/mindmap")
 
   // hydrate from localStorage
   useEffect(() => {
@@ -53,9 +56,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const navItems = useMemo(() => ([
     { href: "/projects", label: "Projects", icon: Folder },
     { href: "/editor", label: "Editor", icon: Type },
-    { href: "/worldbuilding", label: "Worldbuilding", icon: LayoutGrid },
     { href: "/mindmap", label: "Mind Map", icon: Map },
-    { href: "/notes", label: "Notes", icon: NotebookText },
     { href: "/import-export", label: "Import/Export", icon: Import },
     { href: "/settings", label: "Settings", icon: Settings },
   ]), [])
@@ -63,46 +64,49 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="h-full overflow-hidden">
       <body className={cn("h-full flex bg-background text-foreground overflow-hidden")}>        
-        <ProjectProvider>
-          {/* Sidebar */}
-          <Sidebar
-            items={navItems}
-            collapsed={mode === "editor" ? true : collapsed}
-            onToggle={() => setCollapsed(x => !x)}
-          />
+        <ThemeProvider>
+          <ProjectProvider>
+            {/* Sidebar */}
+            <Sidebar
+              items={navItems}
+              collapsed={mode === "editor" ? true : collapsed}
+              onToggle={() => setCollapsed(x => !x)}
+            />
 
-          {/* Main content area */}
-          <div className={cn(
-            "flex-1 flex flex-col min-w-0 min-h-0 layout-transition",
-          )}>
-            {/* Top bar */}
-            <header className="z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-12 items-center gap-2 px-3">
-                <HeaderChapterIndicator />
-                <div className="ml-auto flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    className="gap-2"
-                    aria-label="Toggle layout mode"
-                    onClick={() => setMode(m => (m === "dashboard" ? "editor" : "dashboard"))}
-                  >
-                    <PanelsTopLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline">{mode === "dashboard" ? "Centered Editor" : "Dashboard"} Mode</span>
-                  </Button>
+            {/* Main content area */}
+            <div className={cn(
+              "flex-1 flex flex-col min-w-0 min-h-0 layout-transition",
+            )}>
+              {/* Top bar */}
+              <header className="z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="flex h-12 items-center gap-2 px-3">
+                  <HeaderChapterIndicator />
+                  <div className="ml-auto flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      className="gap-2"
+                      aria-label="Toggle layout mode"
+                      onClick={() => setMode(m => (m === "dashboard" ? "editor" : "dashboard"))}
+                    >
+                      <PanelsTopLeft className="h-4 w-4" />
+                      <span className="hidden sm:inline">{mode === "dashboard" ? "Centered Editor" : "Dashboard"} Mode</span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </header>
+              </header>
 
-            <main
-              className={cn(
-                "flex-1 min-h-0 overflow-hidden px-4 pt-0 pb-4",
-                mode === "editor" ? "w-full max-w-3xl mx-auto" : "",
-              )}
-            >
-              {children}
-            </main>
-          </div>
-        </ProjectProvider>
+              <main
+                className={cn(
+                  "flex-1 min-h-0 overflow-hidden",
+                  isFullBleed ? "p-0" : "px-4 pt-6 pb-4",
+                  mode === "editor" && !isFullBleed ? "w-full max-w-3xl mx-auto" : "",
+                )}
+              >
+                {children}
+              </main>
+            </div>
+          </ProjectProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

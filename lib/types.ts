@@ -64,10 +64,64 @@ export interface Note {
   updatedAt: ISODate
 }
 
-export interface MindMap {
+// Mind Map system types
+export interface MindMapNode {
   id: ID
   projectId: ID
-  data: unknown
+  type: 'chapter' | 'event' | 'character' | 'location' | 'note' | 'custom'
+  title: string
+  description?: string
+  content?: string
+  image?: string // base64 or URL
+  color?: string
+  // Custom type metadata (used when type === 'custom')
+  customTypeId?: ID
+  customTypeName?: string
+  customIcon?: string // emoji or short text/icon name
+  position: {
+    x: number
+    y: number
+  }
+  size?: {
+    width: number
+    height: number
+  }
+  linkedEntities?: ID[] // Links to chapters, characters, etc.
+  tags?: string[]
+  customFields?: Record<string, any>
+  createdAt: ISODate
+  updatedAt: ISODate
+}
+
+export interface MindMapEdge {
+  id: ID
+  projectId: ID
+  sourceNodeId: ID
+  targetNodeId: ID
+  sourceHandle?: 'top' | 'right' | 'bottom' | 'left'
+  targetHandle?: 'top' | 'right' | 'bottom' | 'left'
+  label?: string
+  type?: 'default' | 'straight' | 'step' | 'smoothstep' | 'bezier'
+  style?: Record<string, any>
+  animated?: boolean
+  createdAt: ISODate
+}
+
+export interface MindMapWorkspace {
+  id: ID
+  projectId: ID
+  name: string
+  description?: string
+  zoomLevel: number
+  viewportPosition: {
+    x: number
+    y: number
+  }
+  backgroundColor?: string
+  gridVisible?: boolean
+  snapToGrid?: boolean
+  createdAt: ISODate
+  updatedAt: ISODate
 }
 
 export interface Theme {
@@ -91,4 +145,15 @@ export interface EditorDocument {
   wordCount?: number
   charCount?: number
   // future: per-chapter splits, notes, images, etc.
+}
+ 
+
+// Mind Map saved custom types
+export interface MindMapCustomType {
+  id: ID
+  projectId: ID
+  name: string
+  icon?: string // emoji or short text/icon name
+  color: string
+  createdAt: ISODate
 }

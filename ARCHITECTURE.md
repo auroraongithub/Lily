@@ -5,7 +5,7 @@
 - `app/`
   - `layout.tsx` – Root layout with collapsible left sidebar and mode toggle
   - `page.tsx` – Landing/dashboard
-  - `editor/`, `worldbuilding/`, `mindmap/`, `notes/`, `projects/`, `settings/`, `import-export/` – Route groups
+  - `editor/`, `mindmap/`, `projects/`, `settings/`, `import-export/` – Route groups
 - `components/`
   - `ui/` – Reusable UI primitives (PascalCase exports)
   - `layout/` – Shared layout wrappers
