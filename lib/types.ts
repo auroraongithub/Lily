@@ -146,7 +146,54 @@ export interface EditorDocument {
   charCount?: number
   // future: per-chapter splits, notes, images, etc.
 }
- 
+
+// Worldbuilding system types
+export interface WorldbuildingTag {
+  id: ID
+  name: string
+  color: string
+  isDefault: boolean
+}
+
+export interface WorldbuildingConnection {
+  id: ID
+  sourceEntityId: ID
+  targetEntityId: ID
+  sourceAnchor: 'top' | 'right' | 'bottom' | 'left'
+  targetAnchor: 'top' | 'right' | 'bottom' | 'left'
+  label?: string
+}
+
+export interface WorldbuildingEntity {
+  id: ID
+  projectId: ID
+  type: 'character' | 'location' | 'faction' | 'item' | 'custom'
+  name: string
+  description?: string
+  image?: string // base64 or URL
+  fallbackColor?: string
+  position: {
+    x: number
+    y: number
+  }
+  tags: ID[] // WorldbuildingTag ids
+  connections: ID[] // WorldbuildingConnection ids
+  linkedChapters?: ID[] // Chapter ids
+  customFields?: Record<string, any>
+  createdAt: ISODate
+  updatedAt: ISODate
+}
+
+export interface WorldbuildingWorkspace {
+  id: ID
+  projectId: ID
+  zoomLevel: number
+  viewportPosition: {
+    x: number
+    y: number
+  }
+  updatedAt: ISODate
+}
 
 // Mind Map saved custom types
 export interface MindMapCustomType {
@@ -156,4 +203,57 @@ export interface MindMapCustomType {
   icon?: string // emoji or short text/icon name
   color: string
   createdAt: ISODate
+}
+
+// Moodboard system types
+export interface MoodboardItem {
+  id: ID
+  projectId: ID
+  name: string
+  description?: string
+  imageUrl: string // base64 or URL
+  imageName: string
+  imageSize: number // bytes
+  themeId?: ID // MoodboardTheme id
+  colorPalette?: string[] // hex colors extracted from image
+  tags?: string[]
+  position: {
+    x: number
+    y: number
+  }
+  gridPosition?: {
+    row: number
+    col: number
+  }
+  customFields?: Record<string, any>
+  createdAt: ISODate
+  updatedAt: ISODate
+}
+
+export interface MoodboardTheme {
+  id: ID
+  projectId: ID
+  name: string
+  description?: string
+  color: string
+  icon?: string // emoji or icon name
+  createdAt: ISODate
+  updatedAt: ISODate
+}
+
+export interface MoodboardWorkspace {
+  id: ID
+  projectId: ID
+  name: string
+  description?: string
+  viewMode: 'grid' | 'freeform'
+  gridColumns: number
+  zoomLevel: number
+  viewportPosition: {
+    x: number
+    y: number
+  }
+  selectedThemeId?: ID // filter by theme
+  createdAt: ISODate
+  updatedAt: ISODate
 }

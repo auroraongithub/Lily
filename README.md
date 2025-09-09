@@ -34,7 +34,7 @@ npm run dev
 - TailwindCSS
 - shadcn/ui-inspired primitives (lucide-react icons)
 - Dexie (IndexedDB)
-- React Flow (for Mind Map)
+- React Flow / Konva / Fabric.js (future, lazy-loaded)
 - pdf-lib / (future: pdfmake, epub) – lazy-loaded when used
 
 ## Project Structure

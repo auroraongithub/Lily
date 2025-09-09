@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type UIEventHandler, type Ref } from 'react'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -25,6 +25,13 @@ interface LexicalEditorProps {
   onDocumentChange: (document: Partial<EditorDocument>) => void
   className?: string
   isLocked?: boolean
+  // Optional: expose scroll container for sync scrolling
+  scrollRef?: Ref<HTMLDivElement>
+  onScroll?: UIEventHandler<HTMLDivElement>
+  // Optional: hide stats bar (useful for split view secondary panes)
+  showStats?: boolean
+  // Optional: force scrollbar to be visible even if content does not overflow
+  alwaysShowScrollbar?: boolean
 }
 
 // Placeholder component for empty editor
@@ -36,7 +43,7 @@ function Placeholder() {
   )
 }
 
-export function LexicalEditor({ document, onDocumentChange, className, isLocked = false }: LexicalEditorProps) {
+export function LexicalEditor({ document, onDocumentChange, className, isLocked = false, scrollRef, onScroll, showStats = true, alwaysShowScrollbar = false }: LexicalEditorProps) {
   const [stats, setStats] = useState<EditorStatsType>({
     wordCount: 0,
     characterCount: 0,
@@ -130,13 +137,18 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
   }, [onDocumentChange])
 
   return (
-    <div className={cn('flex flex-col h-full relative', className)}>
+    <div className={cn('flex flex-col h-full min-h-0 relative', className)}>
       <LexicalComposer initialConfig={initialConfig}>
         {/* Scrollable editor content area */}
-        <div className={cn(
-          'flex-1 overflow-y-auto transition-all duration-300',
-          isLocked && 'blur-sm opacity-30 pointer-events-none'
-        )}>
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className={cn(
+            'flex-1 min-h-0 max-h-full transition-all duration-300',
+            alwaysShowScrollbar ? 'overflow-y-scroll' : 'overflow-y-auto',
+            isLocked && 'blur-sm opacity-30 pointer-events-none'
+          )}
+        >
           {/* Toolbar - sticky within the editor scroll area */}
           <div className="sticky top-0 z-20 bg-background -mt-px relative">
             <EditorToolbar 
@@ -189,14 +201,16 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
           </div>
 
           {/* Stats bar - fixed to bottom of viewport */}
-          <div className="fixed bottom-0 left-0 right-0 z-20 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-1">
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <span>{stats.wordCount} words</span>
-              <span>{stats.characterCount} characters</span>
-              <span>{stats.paragraphCount} paragraphs</span>
-              <span>{stats.readingTime} min read</span>
+          {showStats && (
+            <div className="fixed bottom-0 left-0 right-0 z-20 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-1 pointer-events-none">
+              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                <span>{stats.wordCount} words</span>
+                <span>{stats.characterCount} characters</span>
+                <span>{stats.paragraphCount} paragraphs</span>
+                <span>{stats.readingTime} min read</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </LexicalComposer>
     </div>

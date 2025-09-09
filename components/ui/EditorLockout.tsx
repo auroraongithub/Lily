@@ -140,7 +140,7 @@ export function EditorLockout({
   }
 
   return (
-    <div className="absolute -top-8 -left-4 -right-4 -bottom-4 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <Card className="max-w-md mx-4 p-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90">
         {renderContent()}
       </Card>

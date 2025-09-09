@@ -5,6 +5,11 @@ export function cn(...classes: Array<string | false | null | undefined>) {
 }
 
 // Local storage state hook for persisting simple values
+// Generate a unique ID using crypto.randomUUID
+export function generateId(): string {
+  return crypto.randomUUID()
+}
+
 export function useLocalStorage<T>(key: string, defaultValue: T) {
   const [value, setValue] = useState<T>(defaultValue)
   useEffect(() => {

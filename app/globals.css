@@ -335,7 +335,7 @@ body {
   background: transparent;
 }
 
-/* Utilities */
+/* Worldbuilding specific styles */
 @layer utilities {
   .line-clamp-2 {
     display: -webkit-box;
@@ -352,6 +352,52 @@ body {
   }
 }
 
+/* Worldbuilding workspace animations */
+.worldbuilding-card {
+  transition: all 200ms ease-out;
+}
+
+.worldbuilding-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.worldbuilding-card.dragging {
+  transform: rotate(3deg) scale(0.95);
+  opacity: 0.8;
+  z-index: 1000;
+}
+
+/* Connection nodes hover effects */
+.connection-node {
+  transition: all 150ms ease-out;
+  transform: scale(0);
+}
+
+.worldbuilding-card:hover .connection-node {
+  transform: scale(1);
+}
+
+.connection-node:hover {
+  transform: scale(1.2);
+}
+
+/* Context menu animations */
+.context-menu {
+  animation: contextMenuSlide 150ms ease-out;
+  transform-origin: top left;
+}
+
+@keyframes contextMenuSlide {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
 
 /* Workspace grid background animation */
 .workspace-grid {
@@ -374,7 +420,20 @@ body {
   }
 }
 
+/* Tag animations */
+.tag-item {
+  transition: all 150ms ease-out;
+}
 
+.tag-item:hover {
+  transform: scale(1.05);
+}
+
+/* Zoom controls styling */
+.zoom-controls {
+  backdrop-filter: blur(8px);
+  background: hsl(var(--background) / 0.8);
+}
 
 /* Mind Map Node animations */
 .mindmap-node {
@@ -480,4 +539,98 @@ body {
 /* React Flow attribution (hide or theme). Keeping visible but subtle. */
 .react-flow__attribution {
   display: none !important;
+}
+
+/* ===== MOODBOARD STYLES ===== */
+
+/* Moodboard grid animations */
+.moodboard-card {
+  transition: all 200ms ease;
+}
+
+.moodboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Image hover effects */
+.moodboard-image {
+  transition: transform 300ms ease;
+}
+
+.moodboard-card:hover .moodboard-image {
+  transform: scale(1.05);
+}
+
+/* Color palette animation */
+.color-palette {
+  animation: slideUp 200ms ease;
+}
+
+/* Drag and drop upload zone */
+.upload-zone {
+  transition: all 200ms ease;
+}
+
+.upload-zone.drag-active {
+  background: hsl(var(--primary) / 0.05);
+  border-color: hsl(var(--primary));
+  transform: scale(1.02);
+}
+
+/* Theme badge styling */
+.theme-badge {
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Moodboard grid responsiveness */
+@media (max-width: 768px) {
+  .moodboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .moodboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+  }
+}
+
+/* Loading animation for color extraction */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.extracting-colors {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Context menu animations */
+.context-menu {
+  animation: slideUp 150ms ease;
+}
+
+/* File upload progress */
+.upload-progress {
+  background: linear-gradient(90deg, 
+    hsl(var(--primary)) 0%, 
+    hsl(var(--primary) / 0.8) 50%, 
+    hsl(var(--primary)) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
