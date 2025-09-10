@@ -2,8 +2,9 @@
 
 import { ThemeSelector } from '@/features/settings/components/ThemeSelector'
 import { DataManagement } from '@/features/settings/components/DataManagement'
+import { KeyboardShortcutsManager } from '@/features/settings/components/KeyboardShortcutsManager'
 import { Card } from '@/components/ui/Card'
-import { Settings, Palette, Database } from 'lucide-react'
+import { Settings, Palette, Database, Keyboard } from 'lucide-react'
 
 export default function SettingsPage() {
   return (
@@ -34,6 +35,20 @@ export default function SettingsPage() {
           </div>
         </div>
         <ThemeSelector />
+      </Card>
+
+      {/* Keyboard Shortcuts */}
+      <Card className="p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-green-500/10 rounded-lg">
+            <Keyboard className="w-5 h-5 text-green-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">Keyboard Shortcuts</h2>
+            <p className="text-muted-foreground">Customize keyboard shortcuts to match your workflow</p>
+          </div>
+        </div>
+        <KeyboardShortcutsManager />
       </Card>
 
       {/* Data Management */}

@@ -389,12 +389,12 @@ export default function EditorPage() {
       </div>
 
       {/* Content area */}
-      <div className="relative flex-1 min-h-0">
+      <div className="relative flex-1 min-h-0 h-full">
         {!splitEnabled && (
           <LexicalEditor
             document={document}
             onDocumentChange={handleDocumentChange}
-            className="flex-1 min-h-0"
+            className="flex-1 min-h-0 h-full"
             isLocked={isLocked}
             scrollRef={scrollRefA}
             onScroll={syncScrollHandler('A')}
@@ -403,13 +403,13 @@ export default function EditorPage() {
         )}
 
         {splitEnabled && (
-          <div className="flex flex-1 min-h-0 flex-row">
+          <div className="flex flex-1 min-h-0 h-full flex-row">
             {/* Left pane: primary editor */}
-            <div className="w-1/2 min-h-0 border-r flex flex-col">
+            <div className="w-1/2 min-h-0 h-full border-r flex flex-col">
               <LexicalEditor
                 document={document}
                 onDocumentChange={handleDocumentChange}
-                className="flex-1 min-h-0"
+                className="flex-1 min-h-0 h-full"
                 isLocked={isLocked}
                 scrollRef={scrollRefA}
                 onScroll={syncScrollHandler('A')}
@@ -418,7 +418,7 @@ export default function EditorPage() {
               />
             </div>
             {/* Right pane: selectable */}
-            <div className="w-1/2 min-h-0 flex flex-col">            
+            <div className="w-1/2 min-h-0 h-full flex flex-col">            
               {paneBType === 'editor' ? (
                 loadingBFinal || !documentB ? (
                   <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading…</div>
@@ -426,7 +426,7 @@ export default function EditorPage() {
                   <LexicalEditor
                     document={documentB}
                     onDocumentChange={selectedChapterB ? updateDocB : handleFallbackDocumentChangeB}
-                    className="flex-1 min-h-0"
+                    className="flex-1 min-h-0 h-full"
                     isLocked={isLocked}
                     scrollRef={scrollRefB}
                     onScroll={syncScrollHandler('B')}
@@ -435,7 +435,7 @@ export default function EditorPage() {
                   />
                 )
               ) : (
-                <div className="flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 min-h-0 h-full overflow-hidden">
                   {currentProject ? (
                     <MindMapWorkspace projectId={currentProject.id} />
                   ) : (

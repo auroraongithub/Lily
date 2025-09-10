@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { Type, Map, Folder, Import, Settings, PanelsTopLeft, Palette } from "lucide-react"
 import { ProjectProvider, useProjectContext } from "@/features/projects/context/ProjectContext"
 import { ThemeProvider } from "@/features/settings/context/ThemeContext"
+import { KeyboardShortcutsProvider } from "@/features/settings/context/KeyboardShortcutsContext"
 
 // App modes
 export type AppMode = "dashboard" | "editor"
@@ -67,48 +68,50 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className="h-full overflow-hidden">
       <body className={cn("h-full flex bg-background text-foreground overflow-hidden")}>        
         <ThemeProvider>
-          <ProjectProvider>
-            {/* Sidebar */}
-            <Sidebar
-              items={navItems}
-              collapsed={mode === "editor" ? true : collapsed}
-              onToggle={() => setCollapsed(x => !x)}
-            />
+          <KeyboardShortcutsProvider>
+            <ProjectProvider>
+              {/* Sidebar */}
+              <Sidebar
+                items={navItems}
+                collapsed={mode === "editor" ? true : collapsed}
+                onToggle={() => setCollapsed(x => !x)}
+              />
 
-            {/* Main content area */}
-            <div className={cn(
-              "flex-1 flex flex-col min-w-0 min-h-0 layout-transition",
-            )}>
-              {/* Top bar */}
-              <header className="z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="flex h-12 items-center gap-2 px-3">
-                  <HeaderChapterIndicator />
-                  <div className="ml-auto flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      className="gap-2"
-                      aria-label="Toggle layout mode"
-                      onClick={() => setMode(m => (m === "dashboard" ? "editor" : "dashboard"))}
-                    >
-                      <PanelsTopLeft className="h-4 w-4" />
-                      <span className="hidden sm:inline">{mode === "dashboard" ? "Centered Editor" : "Dashboard"} Mode</span>
-                    </Button>
+              {/* Main content area */}
+              <div className={cn(
+                "flex-1 flex flex-col min-w-0 min-h-0 layout-transition",
+              )}>
+                {/* Top bar */}
+                <header className="z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                  <div className="flex h-12 items-center gap-2 px-3">
+                    <HeaderChapterIndicator />
+                    <div className="ml-auto flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        className="gap-2"
+                        aria-label="Toggle layout mode"
+                        onClick={() => setMode(m => (m === "dashboard" ? "editor" : "dashboard"))}
+                      >
+                        <PanelsTopLeft className="h-4 w-4" />
+                        <span className="hidden sm:inline">{mode === "dashboard" ? "Centered Editor" : "Dashboard"} Mode</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </header>
+                </header>
 
-              <main
-                className={cn(
-                  "flex-1 min-h-0 overflow-hidden",
-                  isFullBleed ? "p-0" : "px-4 pt-6 pb-4",
-                  // Centered content only when explicitly in Centered Editor Mode and not a full-bleed page
-                  mode === "editor" && !isFullBleed ? "w-full max-w-3xl mx-auto" : "",
-                )}
-              >
-                {children}
-              </main>
-            </div>
-          </ProjectProvider>
+                <main
+                  className={cn(
+                    "flex-1 min-h-0 overflow-hidden",
+                    isFullBleed ? "p-0" : "px-4 pt-6 pb-4",
+                    // Centered content only when explicitly in Centered Editor Mode and not a full-bleed page
+                    mode === "editor" && !isFullBleed ? "w-full max-w-3xl mx-auto" : "",
+                  )}
+                >
+                  {children}
+                </main>
+              </div>
+            </ProjectProvider>
+          </KeyboardShortcutsProvider>
         </ThemeProvider>
       </body>
     </html>

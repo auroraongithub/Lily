@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState, type UIEventHandler, type Ref } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type UIEventHandler, type Ref } from 'react'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -51,6 +51,31 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
     paragraphCount: 0,
     readingTime: 0,
   })
+
+  // Track container rect to limit the fixed stats bar within the editor pane only
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [barRect, setBarRect] = useState<{ left: number; width: number }>({ left: 0, width: 0 })
+  const updateBarRect = useCallback(() => {
+    if (!containerRef.current) return
+    const r = containerRef.current.getBoundingClientRect()
+    setBarRect({ left: Math.round(r.left), width: Math.round(r.width) })
+  }, [])
+  useEffect(() => {
+    updateBarRect()
+    const onResize = () => updateBarRect()
+    window.addEventListener('resize', onResize)
+    window.addEventListener('scroll', onResize, true)
+    let ro: ResizeObserver | null = null
+    if ('ResizeObserver' in window && containerRef.current) {
+      ro = new ResizeObserver(() => updateBarRect())
+      ro.observe(containerRef.current)
+    }
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('scroll', onResize, true)
+      if (ro) ro.disconnect()
+    }
+  }, [updateBarRect])
 
   // Save status indicator
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -137,7 +162,7 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
   }, [onDocumentChange])
 
   return (
-    <div className={cn('flex flex-col h-full min-h-0 relative', className)}>
+    <div ref={containerRef} className={cn('flex flex-col h-full min-h-0 relative', className)}>
       <LexicalComposer initialConfig={initialConfig}>
         {/* Scrollable editor content area */}
         <div
@@ -171,7 +196,7 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
               contentEditable={
                 <ContentEditable 
                   className={cn(
-                    'min-h-[600px] p-8 pb-20 focus:outline-none',
+                    'min-h-[600px] p-8 pb-4 focus:outline-none',
                     'prose prose-lg max-w-none',
                     'caret-foreground selection:bg-accent selection:text-accent-foreground',
                     'editor-content',
@@ -200,9 +225,11 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
             <ImagePlugin />
           </div>
 
-          {/* Stats bar - fixed to bottom of viewport */}
+          {/* Stats bar - fixed at bottom of viewport (single instance per page). */}
           {showStats && (
-            <div className="fixed bottom-0 left-0 right-0 z-20 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-1 pointer-events-none">
+            <div className="fixed bottom-0 z-20 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-1 editor-stats-bar pointer-events-none"
+              style={{ left: barRect.left, width: barRect.width }}
+            >
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <span>{stats.wordCount} words</span>
                 <span>{stats.characterCount} characters</span>

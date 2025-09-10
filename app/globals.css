@@ -193,6 +193,7 @@ body {
   outline: none;
   caret-color: hsl(var(--foreground));
   transition: all 200ms ease-out;
+  position: relative; /* for absolute-positioned image nodes */
 }
 
 .lexical-editor .editor-content:focus {
@@ -202,6 +203,13 @@ body {
 /* Smooth caret animation */
 .lexical-editor .editor-content * {
   caret-color: inherit;
+}
+
+/* Ensure floats from images don't leak outside the editor content */
+.lexical-editor .editor-content::after {
+  content: "";
+  display: block;
+  clear: both;
 }
 
 /* Selection styling */
@@ -234,6 +242,68 @@ body {
   line-height: 1.2;
   margin-top: 2rem;
   margin-bottom: 1rem;
+}
+
+/* ===== Editor Image Node Enhancements ===== */
+.image-node {
+  position: relative;
+}
+
+.image-node .image-resizer {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.image-node:hover .image-resizer {
+  opacity: 1;
+}
+
+/* Corner-specific positions and cursors */
+.image-node .image-resizer-se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.image-node .image-resizer-sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.image-node .image-resizer-ne { right: -6px; top: -6px; cursor: nesw-resize; }
+.image-node .image-resizer-nw { left: -6px; top: -6px; cursor: nwse-resize; }
+
+/* Drag handle shown in absolute positioning */
+.image-node .image-drag-handle {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 8px;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  cursor: move;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  z-index: 40; /* above surrounding text */
+}
+
+.image-node:hover .image-drag-handle { opacity: 1; }
+
+/* When image is behind text, always show drag handle to allow grabbing */
+.image-node.image-drag-visible .image-drag-handle { opacity: 1; }
+
+/* Ensure resizers sit above text too */
+.image-node .image-resizer { z-index: 40; }
+
+/* Transparent overlay to grab drags when image is behind text */
+.image-node .image-drag-overlay {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  z-index: 45; /* above text but below context menus */
+  cursor: move;
 }
 
 .lexical-editor .prose h2 {
@@ -280,6 +350,20 @@ body {
   border: 1px solid hsl(var(--border));
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
   backdrop-filter: none; /* ensure no inherited blur/transparency */
+}
+
+/* Force UI font and solid theme-aware styling for image context menu */
+.image-context-menu {
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  backdrop-filter: none;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji" !important;
+}
+
+.image-context-menu button {
+  font: inherit;
 }
 
 @keyframes slideDown {

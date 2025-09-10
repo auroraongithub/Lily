@@ -11,8 +11,10 @@ import {
   PASTE_COMMAND,
   DRAGOVER_COMMAND,
   DROP_COMMAND,
+  KEY_DELETE_COMMAND,
+  KEY_BACKSPACE_COMMAND,
 } from 'lexical'
-import { $createImageNode, type ImagePayload } from '../nodes/ImageNode'
+import { $createImageNode, $isImageNode, type ImagePayload } from '../nodes/ImageNode'
 
 export const INSERT_IMAGE_COMMAND = createCommand<ImagePayload>('INSERT_IMAGE_COMMAND')
 
@@ -101,6 +103,29 @@ export function ImagePlugin() {
       COMMAND_PRIORITY_EDITOR,
     )
   }, [editor, insertFiles])
+
+  // Delete selected images via Delete/Backspace keys
+  useEffect(() => {
+    const onDelete = () => {
+      let handled = false
+      editor.update(() => {
+        const selection = $getSelection() as any
+        if (selection && typeof selection.getNodes === 'function') {
+          const nodes = selection.getNodes()
+          nodes.forEach((n: any) => {
+            if ($isImageNode(n)) {
+              n.remove()
+              handled = true
+            }
+          })
+        }
+      })
+      return handled
+    }
+    const unregisterDelete = editor.registerCommand(KEY_DELETE_COMMAND, onDelete, COMMAND_PRIORITY_EDITOR)
+    const unregisterBackspace = editor.registerCommand(KEY_BACKSPACE_COMMAND, onDelete, COMMAND_PRIORITY_EDITOR)
+    return () => { unregisterDelete(); unregisterBackspace() }
+  }, [editor])
 
   return null
 }
