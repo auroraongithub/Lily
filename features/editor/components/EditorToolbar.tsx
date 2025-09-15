@@ -33,7 +33,11 @@ import {
   Heading2,
   Heading3,
   ChevronDown,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Highlighter,
+  ListTree,
+  Eraser,
+  Trash2
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
@@ -45,9 +49,12 @@ import { INSERT_IMAGE_COMMAND } from '../plugins/ImagePlugin'
 
 interface EditorToolbarProps {
   onFontPresetChange?: (preset: import('../types').FontPreset) => void
+  // Navigator (sections/highlights) panel toggle
+  showNavigator?: boolean
+  onToggleNavigator?: () => void
 }
 
-export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
+export function EditorToolbar({ onFontPresetChange, showNavigator, onToggleNavigator }: EditorToolbarProps = {}) {
   const [editor] = useLexicalComposerContext()
   const [isBold, setIsBold] = useState(false)
   const [isItalic, setIsItalic] = useState(false)
@@ -206,8 +213,49 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
     e.target.value = ''
   }
 
+  // Highlight handling
+  // Add highlight to selection (always add)
+  const applyHighlight = () => {
+    editor.update(() => {
+      const selection = $getSelection()
+      if (!$isRangeSelection(selection)) return
+      $patchStyleText(selection, { 'background-color': 'rgba(250, 204, 21, 0.45)' })
+    })
+  }
+
+  const clearHighlights = () => {
+    window.dispatchEvent(new CustomEvent('lily:editor:clearHighlights'))
+  }
+
+  // Remove highlight from current selection only
+  const removeHighlightSelection = () => {
+    editor.update(() => {
+      const selection = $getSelection()
+      if (!$isRangeSelection(selection)) return
+
+      // Helper to remove a CSS property from inline style string
+      const removeStyleProp = (style: string, prop: string) => {
+        const parts = style
+          .split(';')
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .filter((s) => !s.toLowerCase().startsWith(prop.toLowerCase() + ':'))
+        return parts.length ? parts.join('; ') + ';' : ''
+      }
+
+      const nodes = selection.getNodes()
+      for (const node of nodes) {
+        if (node instanceof TextNode) {
+          const style = node.getStyle() || ''
+          const cleaned = removeStyleProp(style, 'background-color')
+          node.setStyle(cleaned)
+        }
+      }
+    })
+  }
+
   return (
-    <div ref={toolbarRef} className="flex items-center gap-0 px-2 py-1 border-b bg-background">
+    <div ref={toolbarRef} className="flex items-center gap-0 px-2 py-1 bg-background">
       {/* Hidden image input */}
       <input
         ref={imageInputRef}
@@ -239,7 +287,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
         </Button>
       </div>
 
-      <div className="w-px h-6 bg-border mx-0.5" />
+      {/* separator removed for cleaner look */}
 
       {/* Text Formatting */}
       {compact ? (
@@ -260,7 +308,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
           {isFormatOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setIsFormatOpen(false)} />
-              <div className="absolute top-full left-0 z-20 mt-1 w-40 bg-background border rounded-md shadow-md toolbar-dropdown">
+              <div className="absolute top-full left-0 z-20 mt-1 w-40 bg-popover rounded-md shadow-md toolbar-dropdown">
                 <button
                   className={`w-full px-3 py-1.5 text-sm text-left flex items-center gap-2 hover:bg-accent hover:text-accent-foreground ${isBold ? 'bg-accent text-accent-foreground' : ''}`}
                   onClick={() => { formatText('bold'); setIsFormatOpen(false) }}
@@ -330,7 +378,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
         </div>
       )}
 
-      <div className="w-px h-6 bg-border mx-px" />
+      {/* separator removed for cleaner look */}
 
       {/* Headings and Quote */}
       {compact ? (
@@ -351,11 +399,11 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
           {isHeadingOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setIsHeadingOpen(false)} />
-              <div className="absolute top-full left-0 z-20 mt-1 w-28 bg-background border rounded-md shadow-md toolbar-dropdown">
+              <div className="absolute top-full left-0 z-20 mt-1 w-28 bg-popover rounded-md shadow-md toolbar-dropdown">
                 <button className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent hover:text-accent-foreground" onClick={() => { formatHeading('h1'); setIsHeadingOpen(false) }}>H1</button>
                 <button className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent hover:text-accent-foreground" onClick={() => { formatHeading('h2'); setIsHeadingOpen(false) }}>H2</button>
                 <button className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent hover:text-accent-foreground" onClick={() => { formatHeading('h3'); setIsHeadingOpen(false) }}>H3</button>
-                <div className="border-t my-1" />
+                {/* divider removed for cleaner look */}
                 <button className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent hover:text-accent-foreground" onClick={() => { formatQuote(); setIsHeadingOpen(false) }}>Quote</button>
               </div>
             </>
@@ -402,7 +450,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
         </div>
       )}
 
-      <div className="w-px h-6 bg-border mx-px" />
+      {/* separator removed for cleaner look */}
 
       {/* Font Preset */}
       <div className="flex items-center gap-0.5">
@@ -412,7 +460,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
         />
       </div>
 
-      <div className="w-px h-6 bg-border mx-0.5" />
+      {/* separator removed for cleaner look */}
 
       {/* Insert Image */}
       <div className="flex items-center gap-0.5">
@@ -427,7 +475,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
         </Button>
       </div>
 
-      <div className="w-px h-6 bg-border mx-0.5" />
+      {/* separator removed for cleaner look */}
 
       {/* Font Size */}
       <div className="flex items-center gap-0.5">
@@ -437,7 +485,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
         />
       </div>
 
-      <div className="w-px h-6 bg-border mx-0.5" />
+      {/* separator removed for cleaner look */}
 
       {/* Text Color */}
       <div className="flex items-center gap-0.5">
@@ -447,7 +495,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
         />
       </div>
 
-      <div className="w-px h-6 bg-border mx-0.5" />
+      {/* separator removed for cleaner look */}
 
       {/* Alignment */}
       {compact ? (
@@ -476,7 +524,7 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
           {isAlignOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setIsAlignOpen(false)} />
-              <div className="absolute top-full left-0 z-20 mt-1 w-36 bg-background border rounded-md shadow-md toolbar-dropdown">
+              <div className="absolute top-full left-0 z-20 mt-1 w-36 bg-popover rounded-md shadow-md toolbar-dropdown">
                 <button className="w-full px-3 py-1.5 text-sm text-left flex items-center gap-2 hover:bg-accent hover:text-accent-foreground" onClick={() => { handleAlignmentChange('left'); setIsAlignOpen(false) }}><AlignLeft className="h-4 w-4" /> Left</button>
                 <button className="w-full px-3 py-1.5 text-sm text-left flex items-center gap-2 hover:bg-accent hover:text-accent-foreground" onClick={() => { handleAlignmentChange('center'); setIsAlignOpen(false) }}><AlignCenter className="h-4 w-4" /> Center</button>
                 <button className="w-full px-3 py-1.5 text-sm text-left flex items-center gap-2 hover:bg-accent hover:text-accent-foreground" onClick={() => { handleAlignmentChange('right'); setIsAlignOpen(false) }}><AlignRight className="h-4 w-4" /> Right</button>
@@ -525,6 +573,49 @@ export function EditorToolbar({ onFontPresetChange }: EditorToolbarProps = {}) {
           </Button>
         </div>
       )}
+      {/* Spacer to push utility controls to the right */}
+      <div className="flex-1" />
+
+      {/* Utility controls: Navigator toggle, Highlight, Clear, Focus mode */}
+      <div className="flex items-center gap-0.5">
+        <Button
+          variant={showNavigator ? 'secondary' : 'ghost'}
+          size="sm"
+          className="h-8 px-2"
+          onClick={() => onToggleNavigator?.()}
+          title="Toggle Sections & Highlights Panel"
+        >
+          <ListTree className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2"
+          onClick={applyHighlight}
+          title="Highlight Selection"
+        >
+          <Highlighter className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2"
+          onClick={removeHighlightSelection}
+          title="Remove Highlight from Selection"
+        >
+          <Eraser className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2"
+          onClick={clearHighlights}
+          title="Clear All Highlights"
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
+        {/* Focus Mode removed as per request */}
+      </div>
     </div>
   )
 }

@@ -73,7 +73,7 @@ export function FontPresetSelector({ currentPreset, onPresetChange, className }:
           />
           
           {/* Dropdown menu */}
-          <div className="absolute top-full left-0 z-20 mt-1 w-64 bg-popover border rounded-md shadow-md toolbar-dropdown">
+          <div className="absolute top-full left-0 z-20 mt-1 w-64 bg-popover rounded-md shadow-md toolbar-dropdown">
             <div className="p-2">
               <div className="text-xs font-medium text-muted-foreground mb-2 px-2">
                 Font Presets
@@ -106,7 +106,7 @@ export function FontPresetSelector({ currentPreset, onPresetChange, className }:
               ))}
               
               {/* Custom font option placeholder */}
-              <div className="border-t mt-2 pt-2">
+              <div className="mt-2 pt-2">
                 <button
                   className="w-full p-2 text-left hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors text-sm text-muted-foreground"
                   disabled

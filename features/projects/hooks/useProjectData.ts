@@ -98,6 +98,99 @@ export function useProjectData(projectId: string | null) {
     return newChapter
   }
 
+  // Reorder volumes based on provided id order
+  const reorderVolumes = async (orderedIds: string[]) => {
+    if (!projectId) return
+    const now = new Date().toISOString()
+    await db.transaction('rw', db.volumes, async () => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        const id = orderedIds[i]
+        await db.volumes.update(id, { index: i + 1, updatedAt: now })
+      }
+    })
+    // Update local state
+    setVolumes((prev) => {
+      const byId = new Map(prev.map((v) => [v.id, v]))
+      const next = orderedIds
+        .map((id, idx) => ({ ...byId.get(id)!, index: idx + 1, updatedAt: now }))
+        .filter(Boolean) as typeof prev
+      return next
+    })
+  }
+
+  // Reorder chapters within a given volume (or root when volumeId is undefined/null)
+  const reorderChapters = async (volumeId: string | null | undefined, orderedIds: string[]) => {
+    if (!projectId) return
+    const now = new Date().toISOString()
+    await db.transaction('rw', db.chapters, async () => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        const id = orderedIds[i]
+        await db.chapters.update(id, { index: i + 1, volumeId: volumeId ?? undefined, updatedAt: now })
+      }
+    })
+    // Update local state
+    setChapters((prev) => {
+      const map = new Map(prev.map((c) => [c.id, c]))
+      const updated = new Set(orderedIds)
+      const next = prev.map((c) => {
+        if (updated.has(c.id)) {
+          const idx = orderedIds.indexOf(c.id)
+          return { ...c, index: idx + 1, volumeId: volumeId ?? undefined, updatedAt: now }
+        }
+        return c
+      })
+      // keep overall sort by index within respective volumes
+      next.sort((a, b) => a.index - b.index)
+      return next
+    })
+  }
+
+  // Move a chapter to a target volume (or root) at a target index
+  const moveChapter = async (chapterId: string, targetVolumeId: string | null | undefined, targetIndex: number) => {
+    if (!projectId) return
+    const now = new Date().toISOString()
+    const current = chapters.find((c) => c.id === chapterId)
+    if (!current) return
+
+    const sourceVolumeId = current.volumeId ?? null
+
+    // Build new orders for source and target lists
+    const sourceList = chapters
+      .filter((c) => (c.volumeId ?? null) === sourceVolumeId && c.id !== chapterId)
+      .sort((a, b) => a.index - b.index)
+    const targetList = chapters
+      .filter((c) => (c.volumeId ?? null) === (targetVolumeId ?? null) && c.id !== chapterId)
+      .sort((a, b) => a.index - b.index)
+
+    // Insert chapter into targetList at targetIndex
+    const insertAt = Math.max(0, Math.min(targetIndex, targetList.length))
+    targetList.splice(insertAt, 0, { ...current, volumeId: targetVolumeId ?? undefined })
+
+    await db.transaction('rw', db.chapters, async () => {
+      // Reindex source list
+      for (let i = 0; i < sourceList.length; i++) {
+        await db.chapters.update(sourceList[i].id, { index: i + 1, updatedAt: now })
+      }
+      // Reindex target list (with moved chapter)
+      for (let i = 0; i < targetList.length; i++) {
+        await db.chapters.update(targetList[i].id, { index: i + 1, volumeId: targetVolumeId ?? undefined, updatedAt: now })
+      }
+    })
+
+    // Update local state
+    setChapters((prev) => {
+      const others = prev.filter((c) => c.id !== chapterId)
+      const updatedTarget = targetList.map((c, i) => ({ ...c, index: i + 1, volumeId: targetVolumeId ?? undefined, updatedAt: now }))
+      const updatedSource = sourceList.map((c, i) => ({ ...c, index: i + 1, updatedAt: now }))
+      // Merge unique by id
+      const map = new Map<string, typeof prev[number]>()
+      for (const c of others) map.set(c.id, c)
+      for (const c of updatedSource) map.set(c.id, c)
+      for (const c of updatedTarget) map.set(c.id, c)
+      return Array.from(map.values()).sort((a, b) => a.index - b.index)
+    })
+  }
+
   return {
     volumes,
     chapters,
@@ -106,5 +199,8 @@ export function useProjectData(projectId: string | null) {
     getVolumeChapters,
     createVolume,
     createChapter,
+    reorderVolumes,
+    reorderChapters,
+    moveChapter,
   }
 }

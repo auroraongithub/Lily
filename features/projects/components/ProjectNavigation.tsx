@@ -100,22 +100,15 @@ export function ProjectNavigation() {
         />
       </div>
 
-      {/* Volume and Chapter Selectors - only show if project selected */}
+      {/* Volume Selector - only show if project selected */}
       {currentProject && (
-        <div className="flex gap-1">
+        <div>
           <Dropdown
             value={currentVolume?.id}
             placeholder="Volume"
             options={volumeOptions}
             onSelect={handleVolumeChange}
-            className="flex-1 min-w-0"
-          />
-          <Dropdown
-            value={currentChapter?.id}
-            placeholder="Chapter"
-            options={chapterOptions}
-            onSelect={handleChapterChange}
-            className="flex-1 min-w-0"
+            className="w-full"
           />
         </div>
       )}

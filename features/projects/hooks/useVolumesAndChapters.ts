@@ -100,6 +100,19 @@ export function useVolumes(projectId: string) {
     }
   }
 
+  const reorderVolumes = async (orderedIds: string[]) => {
+    if (!projectId) return
+    const now = new Date().toISOString()
+    await db.transaction('rw', db.volumes, async () => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        const id = orderedIds[i]!
+        await db.volumes.update(id, { index: i + 1, updatedAt: now })
+      }
+    })
+    await loadVolumes()
+    triggerVolumesRefresh()
+  }
+
   useEffect(() => {
     if (projectId) {
       loadVolumes()
@@ -126,6 +139,7 @@ export function useVolumes(projectId: string) {
     createVolume,
     updateVolume,
     deleteVolume,
+    reorderVolumes,
     refresh: loadVolumes,
   }
 }
@@ -239,6 +253,19 @@ export function useChapters(projectId: string, volumeId?: string) {
     }
   }
 
+  const reorderChapters = async (scopeVolumeId: string | null | undefined, orderedIds: string[]) => {
+    if (!projectId) return
+    const now = new Date().toISOString()
+    await db.transaction('rw', db.chapters, async () => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        const id = orderedIds[i]!
+        await db.chapters.update(id, { index: i + 1, volumeId: scopeVolumeId ?? undefined, updatedAt: now })
+      }
+    })
+    await loadChapters()
+    triggerChaptersRefresh()
+  }
+
   useEffect(() => {
     if (projectId) {
       loadChapters()
@@ -265,6 +292,9 @@ export function useChapters(projectId: string, volumeId?: string) {
     createChapter,
     updateChapter,
     deleteChapter,
+    reorderChapters,
     refresh: loadChapters,
   }
 }
+
+

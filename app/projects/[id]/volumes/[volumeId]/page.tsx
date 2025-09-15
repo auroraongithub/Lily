@@ -18,11 +18,13 @@ interface VolumeDetailPageProps {
 export default function VolumeDetailPage({ params }: VolumeDetailPageProps) {
   const router = useRouter()
   const { volumes, updateVolume, deleteVolume } = useVolumes(params.id)
-  const { chapters, createChapter, deleteChapter, updateChapter } = useChapters(params.id)
+  const { chapters, createChapter, deleteChapter, updateChapter, reorderChapters } = useChapters(params.id)
   const { setCurrentVolume } = useProjectContext()
   const [volume, setVolume] = useState<Volume | null>(null)
   const [showEditVolume, setShowEditVolume] = useState(false)
   const [editingVolume, setEditingVolume] = useState<Volume | null>(null)
+  const [draggingCh, setDraggingCh] = useState<string | null>(null)
+  const [hoverCh, setHoverCh] = useState<{ id: string; pos: 'before' | 'after' } | null>(null)
 
   useEffect(() => {
     const foundVolume = volumes.find(v => v.id === params.volumeId)
@@ -90,6 +92,37 @@ export default function VolumeDetailPage({ params }: VolumeDetailPageProps) {
   const volumeChapters = chapters.filter(c => c.volumeId === params.volumeId)
   const unvolumizedChapters = chapters.filter(c => !c.volumeId)
 
+  // DnD helpers for chapters (reorder within their scope)
+  const onDragStartCh = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'chapter', id }))
+    e.dataTransfer.effectAllowed = 'move'
+    setDraggingCh(id)
+  }
+  const onDragEndCh = () => { setDraggingCh(null); setHoverCh(null) }
+  const parsePayload = (e: React.DragEvent) => { try { const t = e.dataTransfer.getData('application/json'); return t ? JSON.parse(t) : null } catch { return null } }
+  const computePos = (e: React.DragEvent, el: HTMLElement) => { const rect = el.getBoundingClientRect(); const mid = rect.top + rect.height / 2; return e.clientY < mid ? 'before' as const : 'after' as const }
+  const onDropAtCh = async (e: React.DragEvent, target: Chapter) => {
+    e.preventDefault(); e.stopPropagation()
+    const payload = parsePayload(e); if (!payload || payload.type !== 'chapter') return
+    const dragId: string = payload.id; if (dragId === target.id) return
+    const scopeVol = target.volumeId ?? null
+    const list = (scopeVol ? volumeChapters : unvolumizedChapters).map(c => c.id).filter(id => id !== dragId)
+    let idx = list.indexOf(target.id); if (idx === -1) return
+    if ((hoverCh?.id === target.id && hoverCh.pos === 'after')) idx += 1
+    list.splice(idx, 0, dragId)
+    await reorderChapters(scopeVol, list)
+    setHoverCh(null)
+  }
+  const onDropEndCh = async (e: React.DragEvent, scopeVol: string | null) => {
+    e.preventDefault(); e.stopPropagation()
+    const payload = parsePayload(e); if (!payload || payload.type !== 'chapter') return
+    const dragId: string = payload.id
+    const base = (scopeVol ? volumeChapters : unvolumizedChapters).map(c => c.id).filter(id => id !== dragId)
+    base.push(dragId)
+    await reorderChapters(scopeVol, base)
+    setHoverCh(null)
+  }
+
   if (!volume) {
     return (
       <div className="space-y-6">
@@ -154,37 +187,55 @@ export default function VolumeDetailPage({ params }: VolumeDetailPageProps) {
               {volumeChapters.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Volume Chapters</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+                    onDrop={(e) => onDropEndCh(e, params.volumeId)}
+                  >
                     {volumeChapters.map((chapter) => (
-                      <Card key={chapter.id} className="group transition-all duration-200 hover:shadow-md">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold leading-tight truncate">
-                                {chapter.title}
-                              </h4>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                Chapter {chapter.index}
-                              </p>
-                            </div>
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                              <ActionMenu items={getChapterActions(chapter)} />
-                            </div>
-                          </div>
-                        </CardHeader>
-                        
-                        <CardContent className="pt-0">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <FileText className="h-3 w-3" />
-                                <span>{chapter.wordCount || 0} words</span>
+                      <div
+                        key={chapter.id}
+                        draggable
+                        onDragStart={(e) => onDragStartCh(e, chapter.id)}
+                        onDragEnd={onDragEndCh}
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); const pos = computePos(e, e.currentTarget as HTMLElement); setHoverCh({ id: chapter.id, pos }) }}
+                        onDrop={(e) => onDropAtCh(e, chapter)}
+                        className={
+                          `transition-all ${draggingCh === chapter.id ? 'opacity-60' : ''} ` +
+                          `${hoverCh?.id === chapter.id && hoverCh.pos === 'before' ? 'border-t-2 border-primary rounded' : ''} ` +
+                          `${hoverCh?.id === chapter.id && hoverCh.pos === 'after' ? 'border-b-2 border-primary rounded' : ''}`
+                        }
+                      >
+                        <Card className="group transition-all duration-200 hover:shadow-md">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold leading-tight truncate">
+                                  {chapter.title}
+                                </h4>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Chapter {chapter.index}
+                                </p>
                               </div>
-                              <span>Updated {new Date(chapter.updatedAt).toLocaleDateString()}</span>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ActionMenu items={getChapterActions(chapter)} />
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                          </CardHeader>
+                          
+                          <CardContent className="pt-0">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <FileText className="h-3 w-3" />
+                                  <span>{chapter.wordCount || 0} words</span>
+                                </div>
+                                <span>Updated {new Date(chapter.updatedAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -194,37 +245,55 @@ export default function VolumeDetailPage({ params }: VolumeDetailPageProps) {
               {unvolumizedChapters.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Standalone Chapters</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+                    onDrop={(e) => onDropEndCh(e, null)}
+                  >
                     {unvolumizedChapters.map((chapter) => (
-                      <Card key={chapter.id} className="group transition-all duration-200 hover:shadow-md">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold leading-tight truncate">
-                                {chapter.title}
-                              </h4>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                Chapter {chapter.index}
-                              </p>
-                            </div>
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                              <ActionMenu items={getChapterActions(chapter)} />
-                            </div>
-                          </div>
-                        </CardHeader>
-                        
-                        <CardContent className="pt-0">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <FileText className="h-3 w-3" />
-                                <span>{chapter.wordCount || 0} words</span>
+                      <div
+                        key={chapter.id}
+                        draggable
+                        onDragStart={(e) => onDragStartCh(e, chapter.id)}
+                        onDragEnd={onDragEndCh}
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); const pos = computePos(e, e.currentTarget as HTMLElement); setHoverCh({ id: chapter.id, pos }) }}
+                        onDrop={(e) => onDropAtCh(e, chapter)}
+                        className={
+                          `transition-all ${draggingCh === chapter.id ? 'opacity-60' : ''} ` +
+                          `${hoverCh?.id === chapter.id && hoverCh.pos === 'before' ? 'border-t-2 border-primary rounded' : ''} ` +
+                          `${hoverCh?.id === chapter.id && hoverCh.pos === 'after' ? 'border-b-2 border-primary rounded' : ''}`
+                        }
+                      >
+                        <Card className="group transition-all duration-200 hover:shadow-md">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold leading-tight truncate">
+                                  {chapter.title}
+                                </h4>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Chapter {chapter.index}
+                                </p>
                               </div>
-                              <span>Updated {new Date(chapter.updatedAt).toLocaleDateString()}</span>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ActionMenu items={getChapterActions(chapter)} />
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                          </CardHeader>
+                          
+                          <CardContent className="pt-0">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <FileText className="h-3 w-3" />
+                                  <span>{chapter.wordCount || 0} words</span>
+                                </div>
+                                <span>Updated {new Date(chapter.updatedAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                     ))}
                   </div>
                 </div>

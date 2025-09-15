@@ -59,7 +59,7 @@ export function TextColorPicker({ currentColor, onColorChange, className }: Text
           />
           
           {/* Color palette dropdown */}
-          <div className="absolute top-full left-0 z-20 mt-1 p-3 bg-popover border rounded-md shadow-md toolbar-dropdown">
+          <div className="absolute top-full left-0 z-20 mt-1 p-3 bg-popover rounded-md shadow-md toolbar-dropdown">
             <div className="grid grid-cols-4 gap-1 w-32">
               {PRESET_COLORS.map((color) => (
                 <button
@@ -69,8 +69,8 @@ export function TextColorPicker({ currentColor, onColorChange, className }: Text
                     setIsOpen(false)
                   }}
                   className={cn(
-                    'w-6 h-6 rounded border-2 hover:scale-110 transition-transform',
-                    color === currentColor ? 'border-ring' : 'border-transparent'
+                    'w-6 h-6 rounded hover:scale-110 transition-transform ring-offset-0',
+                    color === currentColor ? 'ring-2 ring-ring' : 'ring-0'
                   )}
                   style={{ backgroundColor: color }}
                   title={color}
@@ -79,7 +79,7 @@ export function TextColorPicker({ currentColor, onColorChange, className }: Text
             </div>
             
             {/* Custom color input */}
-            <div className="mt-3 pt-2 border-t">
+            <div className="mt-3 pt-2">
               <input
                 type="color"
                 value={currentColor}
@@ -87,7 +87,7 @@ export function TextColorPicker({ currentColor, onColorChange, className }: Text
                   onColorChange(e.target.value)
                   setIsOpen(false)
                 }}
-                className="w-full h-8 rounded border cursor-pointer"
+                className="w-full h-8 rounded cursor-pointer ring-1 ring-input"
                 title="Custom Color"
               />
             </div>

@@ -4,7 +4,11 @@ export type ISODate = string
 export interface Project {
   id: ID
   name: string
+  index?: number
   description?: string
+  coverUrl?: string // Base64 image or URL for project cover
+  pov?: 'first' | 'second' | 'third-limited' | 'third-omniscient' | 'multiple' // Point of view
+  tense?: 'present' | 'past' | 'future' // Narrative tense
   createdAt: ISODate
   updatedAt: ISODate
 }
@@ -172,6 +176,9 @@ export interface WorldbuildingEntity {
   description?: string
   image?: string // base64 or URL
   fallbackColor?: string
+  // Codex: aliases/nicknames and highlight color
+  aliases?: string[]
+  highlightColor?: string
   position: {
     x: number
     y: number
@@ -182,6 +189,31 @@ export interface WorldbuildingEntity {
   customFields?: Record<string, any>
   createdAt: ISODate
   updatedAt: ISODate
+}
+
+// Codex: detected mentions of entities within chapters/manuscripts
+export interface EntityMention {
+  id: ID
+  projectId: ID
+  entityId: ID
+  chapterId: ID
+  position: number // character offset within the chapter plain text
+  length: number // length of the matched text
+  matchedText: string
+  createdAt: ISODate
+  updatedAt: ISODate
+}
+
+// Codex: time-series progression points for entities across chapters
+export interface EntityProgressPoint {
+  id: ID
+  projectId: ID
+  entityId: ID
+  chapterId?: ID
+  key: string // e.g., 'health', 'status', 'influence'
+  valueNum?: number
+  valueText?: string
+  createdAt: ISODate
 }
 
 export interface WorldbuildingWorkspace {

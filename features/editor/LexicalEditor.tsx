@@ -18,6 +18,13 @@ import { EditorToolbar } from './components/EditorToolbar'
 import { AutoSavePlugin } from './plugins/AutoSavePlugin'
 import { KeyboardShortcutsPlugin } from './plugins/KeyboardShortcutsPlugin'
 import { ImagePlugin } from './plugins/ImagePlugin'
+import { SectionsPlugin } from './plugins/SectionsPlugin'
+import { HighlightsPlugin } from './plugins/HighlightsPlugin'
+import { ScrollToKeyPlugin } from './plugins/ScrollToKeyPlugin'
+import { EntityMentionsPlugin } from './plugins/EntityMentionsPlugin'
+import { EntityMentionsOverlayPlugin } from './plugins/EntityMentionsOverlayPlugin'
+import type { SectionItem } from './plugins/SectionsPlugin'
+import type { HighlightItem } from './plugins/HighlightsPlugin'
 import type { EditorDocument, EditorStats as EditorStatsType } from './types'
 
 interface LexicalEditorProps {
@@ -100,6 +107,17 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
     }
   }, [])
 
+  // Navigator panel state
+  const [showNavigator, setShowNavigator] = useState(false)
+  const toggleNavigator = useCallback(() => setShowNavigator((v) => !v), [])
+
+  // Sections & Highlights data
+  const [sections, setSections] = useState<SectionItem[]>([])
+  const [highlights, setHighlights] = useState<HighlightItem[]>([])
+  const scrollToKey = useCallback((key: string) => {
+    window.dispatchEvent(new CustomEvent('lily:editor:scrollToKey', { detail: { key } }))
+  }, [])
+
   // Lexical editor configuration
   const initialConfig = useMemo(() => ({
     namespace: 'lily-editor',
@@ -180,6 +198,8 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
               onFontPresetChange={(preset) => {
                 onDocumentChange({ fontPreset: preset })
               }}
+              showNavigator={showNavigator}
+              onToggleNavigator={toggleNavigator}
             />
             {/* Save indicator */}
             <div className="absolute right-2 top-1 text-xs text-muted-foreground select-none">
@@ -223,11 +243,18 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
             />
             <KeyboardShortcutsPlugin />
             <ImagePlugin />
+            <SectionsPlugin onSectionsChange={setSections} />
+            <HighlightsPlugin onHighlightsChange={setHighlights} />
+            <ScrollToKeyPlugin />
+            {/* Codex mentions highlighting */}
+            <EntityMentionsPlugin documentId={document.id} />
+            {/* Overlay fallback (non-destructive, theme-proof) */}
+            <EntityMentionsOverlayPlugin documentId={document.id} opacity={0.28} />
           </div>
 
           {/* Stats bar - fixed at bottom of viewport (single instance per page). */}
           {showStats && (
-            <div className="fixed bottom-0 z-20 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-1 editor-stats-bar pointer-events-none"
+            <div className="fixed bottom-0 z-20 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-1 editor-stats-bar pointer-events-none"
               style={{ left: barRect.left, width: barRect.width }}
             >
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -235,6 +262,65 @@ export function LexicalEditor({ document, onDocumentChange, className, isLocked 
                 <span>{stats.characterCount} characters</span>
                 <span>{stats.paragraphCount} paragraphs</span>
                 <span>{stats.readingTime} min read</span>
+              </div>
+            </div>
+          )}
+
+          {/* Navigator Panel: Sections & Highlights */}
+          {showNavigator && (
+            <div className="absolute top-12 right-2 bottom-2 w-64 bg-card rounded-md shadow-sm overflow-hidden">
+              <div className="h-8 px-3 flex items-center justify-between bg-muted/40">
+                <span className="text-xs font-medium text-muted-foreground">Navigator</span>
+              </div>
+              <div className="h-full overflow-y-auto">
+                {/* Sections */}
+                <div className="px-3 py-2">
+                  <div className="text-xs font-semibold text-muted-foreground mb-1">Sections</div>
+                  {sections.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No headings yet.</div>
+                  ) : (
+                    <ul className="space-y-1">
+                      {sections.map((s) => (
+                        <li key={s.key}>
+                          <button
+                            className={cn(
+                              'w-full text-left text-xs px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground transition-colors',
+                              s.tag === 'h1' && 'font-semibold',
+                              s.tag === 'h2' && 'pl-1',
+                              s.tag === 'h3' && 'pl-2',
+                              (s.tag === 'h4' || s.tag === 'h5' || s.tag === 'h6') && 'pl-3'
+                            )}
+                            onClick={() => scrollToKey(s.key)}
+                          >
+                            {s.text}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="my-1" />
+                {/* Highlights */}
+                <div className="px-3 py-2">
+                  <div className="text-xs font-semibold text-muted-foreground mb-1">Highlights</div>
+                  {highlights.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No highlights.</div>
+                  ) : (
+                    <ul className="space-y-1">
+                      {highlights.map((h) => (
+                        <li key={h.key}>
+                          <button
+                            className="w-full text-left text-xs px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                            onClick={() => scrollToKey(h.key)}
+                            title={h.text}
+                          >
+                            {h.text}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             </div>
           )}

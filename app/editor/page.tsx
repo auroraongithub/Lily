@@ -10,6 +10,11 @@ import { db } from '@/lib/db'
 import type { EditorDocument } from '@/features/editor/types'
 import type { Project, Chapter } from '@/lib/types'
 import { MindMapWorkspace } from '@/features/mindmap/components/MindMapWorkspace'
+import { MoodboardGrid } from '@/features/moodboard'
+import ImportExportPage from '@/app/import-export/page'
+import ProjectsPage from '@/app/projects/page'
+import SettingsPage from '@/app/settings/page'
+import { OutlinePane } from '@/features/planning/components/OutlinePane'
 import { Button } from '@/components/ui/Button'
 import { Columns2, Link2 } from 'lucide-react'
 
@@ -24,7 +29,7 @@ export default function EditorPage() {
   } = useProjectContext()
   
   const { document: chapterDocument, isLoading: chapterLoading, updateDocument: updateChapterDocument } = useChapterEditor(currentChapter)
-  const { volumes, chapters, getVolumeChapters, createVolume, createChapter } = useProjectData(currentProject?.id || null)
+  const { volumes, chapters, getVolumeChapters, createVolume, createChapter, reorderVolumes, reorderChapters, moveChapter } = useProjectData(currentProject?.id || null)
   const [fallbackDocument, setFallbackDocument] = useState<EditorDocument | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [projects, setProjects] = useState<Project[]>([])
@@ -33,7 +38,30 @@ export default function EditorPage() {
   const [splitEnabled, setSplitEnabled] = useState(false)
   const [syncScroll, setSyncScroll] = useState(true)
 
-  type PaneType = 'editor' | 'mindmap'
+  // Split view sizing
+  const [splitRatio, setSplitRatio] = useState(0.5) // 0..1 width for left pane
+  const splitContainerRef = useRef<HTMLDivElement | null>(null)
+  const onSplitDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const container = splitContainerRef.current
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const startX = e.clientX
+    const startRatio = splitRatio
+    const onMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - startX
+      const next = Math.max(0.2, Math.min(0.8, startRatio + dx / Math.max(1, rect.width)))
+      setSplitRatio(next)
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  type PaneType = 'editor' | 'mindmap' | 'outline' | 'moodboard' | 'importExport' | 'projects' | 'settings'
   const [paneBType, setPaneBType] = useState<PaneType>('mindmap')
   const [selectedVolumeB, setSelectedVolumeB] = useState<typeof currentVolume>(null)
   const [selectedChapterB, setSelectedChapterB] = useState<Chapter | null>(null)
@@ -198,6 +226,16 @@ export default function EditorPage() {
   const lockoutType = getLockoutState()
   const isLocked = lockoutType !== null
 
+  // Right pane lockout mirrors project/volume/chapter selection for pane B
+  const getLockoutStateB = () => {
+    if (!currentProject) return 'no-project' as const
+    if (!selectedVolumeB) return 'no-volume' as const
+    if (!selectedChapterB) return 'no-chapter' as const
+    return null
+  }
+  const lockoutTypeB = getLockoutStateB()
+  const isLockedB = lockoutTypeB !== null
+
   // Handle create/select actions
   const handleCreateProject = async () => {
     // Navigate to projects page to create new project
@@ -222,6 +260,29 @@ export default function EditorPage() {
       setCurrentChapter(newChapter)
     } catch (error) {
       console.error('Failed to create chapter:', error)
+    }
+  }
+
+  // Right pane: create actions
+  const handleCreateVolumeB = async () => {
+    if (!currentProject) return
+    try {
+      const newVolume = await createVolume(`Volume ${volumes.length + 1}`)
+      setSelectedVolumeB(newVolume)
+      setSelectedChapterB(null)
+    } catch (error) {
+      console.error('Failed to create volume (right pane):', error)
+    }
+  }
+
+  const handleCreateChapterB = async () => {
+    if (!currentProject || !selectedVolumeB) return
+    try {
+      const volumeChapters = getVolumeChapters(selectedVolumeB.id)
+      const newChapter = await createChapter(`Chapter ${volumeChapters.length + 1}`, selectedVolumeB.id)
+      setSelectedChapterB(newChapter)
+    } catch (error) {
+      console.error('Failed to create chapter (right pane):', error)
     }
   }
 
@@ -297,7 +358,7 @@ export default function EditorPage() {
   return (
     <div className="h-full min-h-0 flex flex-col">
       {/* Split view controls - clean switches */}
-      <div className="border-b bg-card px-6 py-4 flex items-center gap-6 flex-nowrap overflow-x-auto">
+      <div className="bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/40 rounded-tl-[var(--radius)] rounded-tr-[var(--radius)] overflow-hidden px-6 py-4 flex items-center gap-6 flex-nowrap overflow-x-auto">
         {/* Split View Toggle */}
         <div className="flex items-center gap-3 shrink-0">
           <button
@@ -358,6 +419,11 @@ export default function EditorPage() {
           >
             <option value="editor">Editor</option>
             <option value="mindmap">Mind Map</option>
+            <option value="outline">Outline</option>
+            <option value="moodboard">Moodboard</option>
+            <option value="importExport">Import/Export</option>
+            <option value="projects">Projects</option>
+            <option value="settings">Settings</option>
           </select>
           {paneBType === 'editor' && (
             <>
@@ -367,7 +433,8 @@ export default function EditorPage() {
                 onChange={(e) => handleSelectVolumeB(e.target.value)}
                 disabled={!splitEnabled}
               >
-                <option value="">Root</option>
+                {/* hidden placeholder to keep controlled value when none selected */}
+                <option value="" disabled hidden></option>
                 {volumes.map((v) => (
                   <option key={v.id} value={v.id}>{v.title}</option>
                 ))}
@@ -376,10 +443,11 @@ export default function EditorPage() {
                 className="h-8 px-3 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-[140px] disabled:opacity-50"
                 value={selectedChapterB?.id || ''}
                 onChange={(e) => handleSelectChapterB(e.target.value)}
-                disabled={!splitEnabled}
+                disabled={!splitEnabled || !selectedVolumeB}
               >
-                <option value="">Untitled</option>
-                {(selectedVolumeB ? getVolumeChapters(selectedVolumeB.id) : chapters.filter(c => !c.volumeId)).map((c) => (
+                {/* hidden placeholder to keep controlled value when none selected */}
+                <option value="" disabled hidden></option>
+                {(selectedVolumeB ? getVolumeChapters(selectedVolumeB.id) : []).map((c) => (
                   <option key={c.id} value={c.id}>{c.title}</option>
                 ))}
               </select>
@@ -403,9 +471,9 @@ export default function EditorPage() {
         )}
 
         {splitEnabled && (
-          <div className="flex flex-1 min-h-0 h-full flex-row">
+          <div ref={splitContainerRef} className="flex flex-1 min-h-0 h-full min-w-0 flex-row">
             {/* Left pane: primary editor */}
-            <div className="w-1/2 min-h-0 h-full border-r flex flex-col">
+            <div className="min-h-0 min-w-0 h-full flex flex-col flex-none" style={{ width: `${splitRatio * 100}%` }}>
               <LexicalEditor
                 document={document}
                 onDocumentChange={handleDocumentChange}
@@ -417,29 +485,94 @@ export default function EditorPage() {
                 alwaysShowScrollbar
               />
             </div>
+            {/* Resizer */}
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              title="Drag to resize"
+              onMouseDown={onSplitDragStart}
+              onDoubleClick={() => setSplitRatio(0.5)}
+              className="relative w-2 h-full cursor-col-resize group select-none"
+            >
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border/30 group-hover:bg-border/50" />
+            </div>
             {/* Right pane: selectable */}
-            <div className="w-1/2 min-h-0 h-full flex flex-col">            
+            <div className="min-h-0 min-w-0 h-full flex flex-col flex-1">            
               {paneBType === 'editor' ? (
                 loadingBFinal || !documentB ? (
                   <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading…</div>
                 ) : (
-                  <LexicalEditor
-                    document={documentB}
-                    onDocumentChange={selectedChapterB ? updateDocB : handleFallbackDocumentChangeB}
-                    className="flex-1 min-h-0 h-full"
-                    isLocked={isLocked}
-                    scrollRef={scrollRefB}
-                    onScroll={syncScrollHandler('B')}
-                    showStats={false}
-                    alwaysShowScrollbar
-                  />
+                  <div className="relative flex-1 min-h-0 h-full">
+                    <LexicalEditor
+                      document={documentB}
+                      onDocumentChange={selectedChapterB ? updateDocB : handleFallbackDocumentChangeB}
+                      className="flex-1 min-h-0 h-full"
+                      isLocked={isLockedB}
+                      scrollRef={scrollRefB}
+                      onScroll={syncScrollHandler('B')}
+                      showStats={false}
+                      alwaysShowScrollbar
+                    />
+                    {isLockedB && (
+                      <EditorLockout
+                        lockoutType={lockoutTypeB as any}
+                        projectName={currentProject?.name}
+                        volumeName={selectedVolumeB?.title}
+                        volumes={volumes}
+                        chapters={selectedVolumeB ? getVolumeChapters(selectedVolumeB.id) : []}
+                        onCreateProject={handleCreateProject}
+                        onCreateVolume={handleCreateVolumeB}
+                        onCreateChapter={handleCreateChapterB}
+                        onSelectVolume={handleSelectVolumeB}
+                        onSelectChapter={handleSelectChapterB}
+                      />
+                    )}
+                  </div>
                 )
-              ) : (
+              ) : paneBType === 'mindmap' ? (
                 <div className="flex-1 min-h-0 h-full overflow-hidden">
                   {currentProject ? (
                     <MindMapWorkspace projectId={currentProject.id} />
                   ) : (
                     <div className="h-full flex items-center justify-center text-muted-foreground">Select a project to view Mind Map</div>
+                  )}
+                </div>
+              ) : paneBType === 'moodboard' ? (
+                <div className="flex-1 min-h-0 h-full overflow-hidden">
+                  {currentProject ? (
+                    <MoodboardGrid />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">Select a project to view Moodboard</div>
+                  )}
+                </div>
+              ) : paneBType === 'importExport' ? (
+                <div className="flex-1 min-h-0 h-full overflow-hidden">
+                  <ImportExportPage />
+                </div>
+              ) : paneBType === 'projects' ? (
+                <div className="flex-1 min-h-0 h-full overflow-hidden">
+                  <ProjectsPage />
+                </div>
+              ) : paneBType === 'settings' ? (
+                <div className="flex-1 min-h-0 h-full overflow-hidden">
+                  <SettingsPage />
+                </div>
+              ) : (
+                <div className="flex-1 min-h-0 h-full overflow-hidden">
+                  {currentProject ? (
+                    <OutlinePane
+                      projectId={currentProject.id}
+                      volumes={volumes}
+                      chapters={chapters}
+                      getVolumeChapters={getVolumeChapters}
+                      reorderVolumes={reorderVolumes}
+                      reorderChapters={reorderChapters}
+                      moveChapter={moveChapter}
+                      onSelectVolume={handleSelectVolume}
+                      onSelectChapter={handleSelectChapter}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">Select a project to view Outline</div>
                   )}
                 </div>
               )}

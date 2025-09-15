@@ -38,7 +38,7 @@ export function FontSizeSelector({ currentSize, onSizeChange, className }: FontS
           />
           
           {/* Dropdown menu */}
-          <div className="absolute top-full left-0 z-20 mt-1 w-16 bg-popover border rounded-md shadow-md max-h-48 overflow-y-auto toolbar-dropdown">
+          <div className="absolute top-full left-0 z-20 mt-1 w-16 bg-popover rounded-md shadow-md max-h-48 overflow-y-auto toolbar-dropdown">
             {FONT_SIZES.map((size) => (
               <button
                 key={size}

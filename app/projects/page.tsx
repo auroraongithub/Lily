@@ -14,12 +14,14 @@ import type { Project } from '@/lib/types'
 
 export default function ProjectsPage() {
   const router = useRouter()
-  const { projects, loading, error, createProject, updateProject, deleteProject } = useProjects()
+  const { projects, loading, error, createProject, updateProject, deleteProject, reorderProjects } = useProjects()
   const { setCurrentProject } = useProjectContext()
   
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const [dragging, setDragging] = useState<string | null>(null)
+  const [hover, setHover] = useState<{ id: string; pos: 'before' | 'after' } | null>(null)
 
   const handleProjectClick = (project: Project) => {
     setCurrentProject(project)
@@ -37,6 +39,41 @@ export default function ProjectsPage() {
     } catch (error) {
       console.error('Failed to delete project:', error)
     }
+  }
+
+  // DnD for projects
+  const onDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'project', id }))
+    e.dataTransfer.effectAllowed = 'move'
+    setDragging(id)
+  }
+  const onDragEnd = () => { setDragging(null); setHover(null) }
+  const parsePayload = (e: React.DragEvent) => {
+    try { const t = e.dataTransfer.getData('application/json'); return t ? JSON.parse(t) : null } catch { return null }
+  }
+  const computePos = (e: React.DragEvent, el: HTMLElement) => {
+    const rect = el.getBoundingClientRect(); const mid = rect.top + rect.height / 2
+    return e.clientY < mid ? 'before' as const : 'after' as const
+  }
+  const onDropAt = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault(); e.stopPropagation()
+    const payload = parsePayload(e); if (!payload || payload.type !== 'project') return
+    const dragId: string = payload.id; if (dragId === targetId) return
+    const order = projects.map(p => p.id).filter(id => id !== dragId)
+    let idx = order.indexOf(targetId); if (idx === -1) return
+    if ((hover?.id === targetId && hover.pos === 'after')) idx += 1
+    order.splice(idx, 0, dragId)
+    await reorderProjects(order)
+    setHover(null)
+  }
+  const onDropEnd = async (e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation()
+    const payload = parsePayload(e); if (!payload || payload.type !== 'project') return
+    const dragId: string = payload.id
+    const order = projects.map(p => p.id).filter(id => id !== dragId)
+    order.push(dragId)
+    await reorderProjects(order)
+    setHover(null)
   }
 
   if (loading) {
@@ -119,15 +156,31 @@ export default function ProjectsPage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+                onDrop={onDropEnd}
+              >
                 {projects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    onClick={() => handleProjectClick(project)}
-                    onEdit={handleEditProject}
-                    onDelete={handleDeleteProject}
-                  />
+                  <div key={project.id}
+                    draggable
+                    onDragStart={(e) => onDragStart(e, project.id)}
+                    onDragEnd={onDragEnd}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); const pos = computePos(e, e.currentTarget as HTMLElement); setHover({ id: project.id, pos }) }}
+                    onDrop={(e) => onDropAt(e, project.id)}
+                    className={
+                      `transition-all ${dragging === project.id ? 'opacity-60' : ''} ` +
+                      `${hover?.id === project.id && hover.pos === 'before' ? 'border-t-2 border-primary rounded' : ''} ` +
+                      `${hover?.id === project.id && hover.pos === 'after' ? 'border-b-2 border-primary rounded' : ''}`
+                    }
+                  >
+                    <ProjectCard
+                      project={project}
+                      onClick={() => handleProjectClick(project)}
+                      onEdit={handleEditProject}
+                      onDelete={handleDeleteProject}
+                    />
+                  </div>
                 ))}
               </div>
             )}

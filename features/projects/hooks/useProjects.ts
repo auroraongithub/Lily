@@ -17,8 +17,15 @@ export function useProjects() {
   const loadProjects = async () => {
     try {
       setLoading(true)
-      const allProjects = await db.projects.orderBy('updatedAt').reverse().toArray()
-      setProjects(allProjects)
+      // Prefer index ordering if present, fallback to updatedAt desc
+      const all = await db.projects.toArray()
+      const withIndex = all.every(p => typeof (p as any).index === 'number')
+      if (withIndex) {
+        all.sort((a: any, b: any) => (a.index ?? 0) - (b.index ?? 0))
+      } else {
+        all.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+      }
+      setProjects(all)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load projects')
@@ -27,13 +34,36 @@ export function useProjects() {
     }
   }
 
-  const createProject = async (name: string, description?: string) => {
+  const reorderProjects = async (orderedIds: string[]) => {
     try {
       const now = new Date().toISOString()
+      await db.transaction('rw', db.projects, async () => {
+        for (let i = 0; i < orderedIds.length; i++) {
+          const pid = orderedIds[i]!
+          await db.projects.update(pid, { index: i + 1, updatedAt: now })
+        }
+      })
+      await loadProjects()
+      triggerProjectsRefresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reorder projects')
+      throw err
+    }
+  }
+
+  const createProject = async (name: string, description?: string, coverUrl?: string, pov?: string, tense?: string) => {
+    try {
+      const now = new Date().toISOString()
+      const existing = await db.projects.toArray()
+      const maxIndex = Math.max(0, ...existing.map((p: any) => (typeof p.index === 'number' ? p.index : 0)))
       const project: Project = {
         id: crypto.randomUUID(),
         name,
+        index: maxIndex + 1,
         description,
+        coverUrl,
+        pov: pov as Project['pov'],
+        tense: tense as Project['tense'],
         createdAt: now,
         updatedAt: now,
       }
@@ -47,7 +77,7 @@ export function useProjects() {
     }
   }
 
-  const updateProject = async (id: string, updates: Partial<Pick<Project, 'name' | 'description'>>) => {
+  const updateProject = async (id: string, updates: Partial<Pick<Project, 'name' | 'description' | 'coverUrl' | 'pov' | 'tense'>>) => {
     try {
       const updatedAt = new Date().toISOString()
       await db.projects.update(id, { ...updates, updatedAt })
@@ -102,6 +132,7 @@ export function useProjects() {
     createProject,
     updateProject,
     deleteProject,
+    reorderProjects,
     refresh: loadProjects,
   }
 }

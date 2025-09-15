@@ -46,7 +46,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "layout-transition border-r bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/40",
+        "layout-transition bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/40",
         isMobile
           ? cn("fixed left-0 top-0 z-40 h-full w-60 transform transition-transform duration-200 ease-in-out", widthClass)
           : cn("relative h-auto", widthClass)
@@ -54,7 +54,7 @@ export function Sidebar({
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className={cn("flex h-12 items-center border-b px-2 justify-start gap-2")}>        
+      <div className={cn("flex h-12 items-center px-2 justify-start gap-2")}>        
         <Button
           variant="ghost"
           size="icon"
@@ -78,7 +78,7 @@ export function Sidebar({
 
       {/* Project Navigation - only show when not collapsed */}
       {!collapsed || isMobile ? (
-        <div className="border-b pb-2 mb-2">
+        <div className="pb-2 mb-2">
           <ProjectNavigation />
         </div>
       ) : null}
